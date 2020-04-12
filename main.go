@@ -5,35 +5,42 @@ import (
 	"time"
 )
 
+func work() {
+	c := 0.0
+	for i := 1; i < 100000; i++ {
+		a := 1.1
+		b := 2.2
+		c += a / b
+	}
+	//time.Sleep(time.Second)
+}
+
 func main() {
-	startTime := time.Now()
-	startQPC := QPC()
-	startUnbiased := UnbiasedInterruptTime()
-	startUnbiasedPrecise := UnbiasedInterruptPreciseTime()
-	for i := 0; i < 10000; i++ {
-		time.Sleep(time.Second)
 
-		nowTime := time.Now()
-		elapsedTime := nowTime.Sub(startTime)
-
-		fmt.Printf("time=%v ", elapsedTime)
-
-		nowQPC := QPC()
-		elapsedQPC := nowQPC - startQPC
-
-		fmt.Printf("qpc=( %v / %v ) ", elapsedQPC, elapsedTime-elapsedQPC)
-
-		nowUnbiased := UnbiasedInterruptTime()
-		elapsedUnbiased := nowUnbiased - startUnbiased
-
-		fmt.Printf("unbiased=( %v / %v ) ", elapsedUnbiased, elapsedTime-elapsedUnbiased)
-
-		nowUnbiasedPrecise := UnbiasedInterruptPreciseTime()
-		elapsedUnbiasedPrecise := nowUnbiasedPrecise - startUnbiasedPrecise
-
-		fmt.Printf("unbiased_precise=( %v / %v ) ", elapsedUnbiasedPrecise, elapsedTime-elapsedUnbiasedPrecise)
-
-		fmt.Println()
+	type snapshot struct {
+		time            time.Time
+		qpc             time.Duration
+		unbiased        time.Duration
+		unbiasedPrecise time.Duration
 	}
 
+	ss := make([]snapshot, 10)
+	for i := range ss {
+		work()
+		ss[i].time = time.Now()
+		ss[i].qpc = QPC()
+		ss[i].unbiased = UnbiasedInterruptTime()
+		ss[i].unbiasedPrecise = UnbiasedInterruptPreciseTime()
+	}
+
+	for i := range ss {
+		if i == 0 {
+			continue
+		}
+		fmt.Printf("time=%v", ss[i].time.Sub(ss[i-1].time))
+		fmt.Printf("\tqpc=%v", ss[i].qpc-ss[i-1].qpc)
+		fmt.Printf("\tunbiased=%v", ss[i].unbiased-ss[i-1].unbiased)
+		fmt.Printf("\tunbiasedPrecise=%v", ss[i].unbiasedPrecise-ss[i-1].unbiasedPrecise)
+		fmt.Printf("\n")
+	}
 }
